@@ -2,9 +2,8 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'))
 const uuid = require('uuid/v4');
 const expect = chai.expect
-const storageAdapter = require('../lib/storage/storage-adapter.js');
+const { dataAdapter, DataServer } = require('../index.js');
 const storageManager = require('@hkube/storage-manager');
-const DataServer = require('../lib/communication/dataServer.js');
 const globalInput = [[3, 6, 9, 1, 5, 4, 8, 7, 2], 'asc'];
 
 const storageFS = {
@@ -34,7 +33,7 @@ const dataServer = new DataServer({ port, binary });
 
 describe('Tests', () => {
     before(async () => {
-        await storageAdapter.init(config);
+        await dataAdapter.init(config);
     });
     describe('Storage', () => {
         it('should get data from storage and parse input data', async () => {
@@ -46,7 +45,7 @@ describe('Tests', () => {
                 'guid-5': { storageInfo: link, path: 'data.array' },
                 'guid-6': { storageInfo: link2, path: 'myValue' }
             };
-            const result = await storageAdapter.getData(input, storage);
+            const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(globalInput[0]);
             expect(result[1].prop).to.eql(globalInput[1]);
         });
@@ -62,7 +61,7 @@ describe('Tests', () => {
                     { storageInfo: link2, path: 'myValue' }
                 ]
             };
-            const result = await storageAdapter.getData(input, storage);
+            const result = await dataAdapter.getData(input, storage);
             expect(result[0].data[0]).to.eql(globalInput[0]);
             expect(result[0].data[1]).to.eql(globalInput[0][2]);
             expect(result[0].data[2]).to.eql(globalInput[1]);
@@ -76,7 +75,7 @@ describe('Tests', () => {
                 'guid-5': { storageInfo: link, index: 4 },
                 'guid-6': { storageInfo: link2, index: 2 }
             };
-            const result = await storageAdapter.getData(input, storage);
+            const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(globalInput[0][4]);
             expect(result[1].prop).to.eql(globalInput[1][2]);
         });
@@ -89,7 +88,7 @@ describe('Tests', () => {
                 'guid-5': { storageInfo: link, path: 'data.array', index: 4 },
                 'guid-6': { storageInfo: link2, path: 'myValue', index: 2 }
             };
-            const result = await storageAdapter.getData(input, storage);
+            const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(globalInput[0][4]);
             expect(result[1].prop).to.eql(globalInput[1][2]);
         });
@@ -103,26 +102,26 @@ describe('Tests', () => {
                 'guid-5': { storageInfo: link, taskId, path: 'no_such' },
                 'guid-6': { storageInfo: link2, taskId, path: 'no_such' }
             };
-            const result = await storageAdapter.getData(input, storage);
+            const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(undefined);
             expect(result[1].prop).to.eql(undefined);
         });
         it('should set data to storage', async () => {
             const jobId = 'jobId:' + uuid();
             const taskId = 'taskId:' + uuid();
-            const result = await storageAdapter.setData({ jobId, taskId, data: globalInput[0] });
+            const result = await dataAdapter.setData({ jobId, taskId, data: globalInput[0] });
             expect(result).to.have.property('path');
         });
         it('should create storage path', async () => {
             const jobId = 'jobId:' + uuid();
             const taskId = 'taskId:' + uuid();
-            const result = storageAdapter.createStoragePath({ jobId, taskId });
+            const result = dataAdapter.createStoragePath({ jobId, taskId });
             expect(result).to.contain(jobId);
             expect(result).to.contain(taskId);
         });
         it('should create metadata', async () => {
             const data = { array: globalInput[0], myValue: { prop: globalInput[1] } }
-            const result = storageAdapter.createMetadata({ nodeName: 'green', data, savePaths: ['green.array', 'green.myValue.prop'] });
+            const result = dataAdapter.createMetadata({ nodeName: 'green', data, savePaths: ['green.array', 'green.myValue.prop'] });
             expect(result['green.array']).to.eql({ type: 'array', size: globalInput[0].length });
             expect(result['green.myValue.prop']).to.eql({ type: 'string' });
         });
@@ -138,7 +137,7 @@ describe('Tests', () => {
                 'guid-5': { discovery, taskId, path: 'data.array' },
                 'guid-6': { discovery, taskId, path: 'myValue' }
             };
-            const result = await storageAdapter.getData(input, storage);
+            const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(globalInput[0]);
             expect(result[1].prop).to.eql(globalInput[1]);
         });
@@ -155,7 +154,7 @@ describe('Tests', () => {
                     { discovery, taskId, path: 'myValue' }
                 ]
             };
-            const result = await storageAdapter.getData(input, storage);
+            const result = await dataAdapter.getData(input, storage);
             expect(result[0].data[0]).to.eql(globalInput[0]);
             expect(result[0].data[1]).to.eql(globalInput[0][2]);
             expect(result[0].data[2]).to.eql(globalInput[1]);
@@ -170,7 +169,7 @@ describe('Tests', () => {
                 'guid-5': { discovery, taskId, index: 2 },
                 'guid-6': { discovery, taskId, index: 4 }
             };
-            const result = await storageAdapter.getData(input, storage);
+            const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(globalInput[0][2]);
             expect(result[1].prop).to.eql(globalInput[0][4]);
         });
@@ -184,7 +183,7 @@ describe('Tests', () => {
                 'guid-5': { discovery, taskId, path: 'data.array', index: 4 },
                 'guid-6': { discovery, taskId, path: 'myValue', index: 2 }
             };
-            const result = await storageAdapter.getData(input, storage);
+            const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(globalInput[0][4]);
             expect(result[1].prop).to.eql(globalInput[1][2]);
         });
@@ -199,7 +198,7 @@ describe('Tests', () => {
                 'guid-5': { discovery, taskId, path: 'no_such' },
                 'guid-6': { discovery, taskId, path: 'no_such' }
             };
-            const result = await storageAdapter.getData(input, storage);
+            const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(undefined);
             expect(result[1].prop).to.eql(undefined);
         });
@@ -219,14 +218,14 @@ describe('Tests', () => {
                 'guid-5': { discovery, storageInfo: link, path: 'data.array' },
                 'guid-6': { discovery, storageInfo: link2, path: 'myValue' }
             };
-            const result = await storageAdapter.getData(input, storage);
+            const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(globalInput[0]);
             expect(result[1].prop).to.eql(globalInput[1]);
         });
         it('should fail to find storage key inside input', async () => {
             const input = ['$$guid-5'];
             const storage = { 'guid-no_such': { storageInfo: 'bla' } };
-            await expect(storageAdapter.getData(input, storage)).to.be.rejectedWith(Error, 'unable to find storage key');
+            await expect(dataAdapter.getData(input, storage)).to.be.rejectedWith(Error, 'unable to find storage key');
         });
     });
 });
