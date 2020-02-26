@@ -1,0 +1,44 @@
+{
+  "name": "@hkube/worker-data-adapter",
+  "version": "1.0.0",
+  "description": "hkube data adapter for get or set data via storage/network",
+  "main": "index.js",
+  "scripts": {
+    "lint": "./node_modules/eslint/bin/eslint.js .",
+    "test": "NODE_ENV=test ./node_modules/mocha/bin/_mocha tests --colors --recursive --exit",
+    "test:cov": "NODE_ENV=test ./node_modules/nyc/bin/nyc.js --exclude=bootstrap.js --reporter=html --reporter=text --reporter=lcov mocha tests --colors --recursive --exit",
+    "coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
+    "build": "npm publish"
+  },
+  "pre-commit": {
+    "run": [
+      "lint",
+      "test"
+    ]
+  },
+  "author": "Hkube",
+  "license": "ISC",
+  "dependencies": {
+    "@hkube/storage-manager": "^1.0.68",
+    "bson": "^4.0.3",
+    "chai-as-promised": "^7.1.1",
+    "clone": "^2.1.2",
+    "deep-get-set": "^1.1.0",
+    "flat": "^5.0.0",
+    "lodash.isequal": "^4.5.0",
+    "object-path": "^0.11.4",
+    "zeromq": "^5.2.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "coveralls": "^3.0.6",
+    "eslint": "^6.2.2",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-chai-friendly": "^0.4.1",
+    "eslint-plugin-import": "^2.18.2",
+    "mocha": "^6.2.0",
+    "nyc": "^14.1.1",
+    "pre-commit": "^1.2.2",
+    "sinon": "^7.4.1"
+  }
+}
