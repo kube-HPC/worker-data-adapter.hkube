@@ -1,7 +1,7 @@
 {
   "name": "@hkube/worker-data-adapter",
   "version": "1.0.0",
-  "description": "hkube data adapter for get or set data via storage/network",
+  "description": "hkube data adapter for get/set data via storage/network",
   "main": "index.js",
   "scripts": {
     "lint": "./node_modules/eslint/bin/eslint.js .",
@@ -21,18 +21,15 @@
   "dependencies": {
     "@hkube/encoding": "^1.0.4",
     "@hkube/storage-manager": "^1.0.68",
-    "bson": "^4.0.3",
-    "chai-as-promised": "^7.1.1",
     "clone": "^2.1.2",
-    "deep-get-set": "^1.1.0",
     "flat": "^5.0.0",
     "lodash.isequal": "^4.5.0",
     "object-path": "^0.11.4",
-    "objectpath": "^2.0.0",
     "zeromq": "^5.2.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "coveralls": "^3.0.6",
     "eslint": "^6.2.2",
     "eslint-config-airbnb-base": "^14.0.0",
