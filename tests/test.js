@@ -15,10 +15,10 @@ const config = {
     clusterName: process.env.CLUSTER_NAME || 'local',
     defaultStorage: process.env.DEFAULT_STORAGE || 'fs',
     enableCache: false,
+    encoding: process.env.WORKER_ENCODING || 'bson',
     algorithmDiscovery: {
         host: process.env.POD_NAME || '127.0.0.1',
-        port: process.env.DISCOVERY_PORT || 9020,
-        binary: true
+        port: process.env.DISCOVERY_PORT || 9020
     },
     storageAdapters: {
         fs: {
@@ -28,8 +28,8 @@ const config = {
     }
 };
 
-const { port, binary } = config.algorithmDiscovery;
-const dataServer = new DataServer({ port, binary });
+const { port } = config.algorithmDiscovery;
+const dataServer = new DataServer({ port, encoding: config.encoding });
 
 describe('Tests', () => {
     before(async () => {
