@@ -18,7 +18,8 @@ const config = {
     encoding: process.env.WORKER_ENCODING || 'bson',
     algorithmDiscovery: {
         host: process.env.POD_NAME || '127.0.0.1',
-        port: process.env.DISCOVERY_PORT || 9020
+        port: process.env.DISCOVERY_PORT || 9020,
+        encoding: process.env.WORKER_ENCODING || 'bson'
     },
     storageAdapters: {
         fs: {
@@ -129,9 +130,8 @@ describe('Tests', () => {
     describe('Server', () => {
         it('should get data from server and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            const { host, port } = config.algorithmDiscovery;
             dataServer.setSendingState(taskId, { data: { array: globalInput[0] }, myValue: globalInput[1] });
-            const discovery = { host, port };
+            const discovery = config.algorithmDiscovery;
             const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
             const storage = {
                 'guid-5': { discovery, taskId, path: 'data.array' },
@@ -143,9 +143,8 @@ describe('Tests', () => {
         });
         it('should get multiple data from server and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            const { host, port } = config.algorithmDiscovery;
             dataServer.setSendingState(taskId, { data: { array: globalInput[0] }, myValue: globalInput[1] });
-            const discovery = { host, port };
+            const discovery = config.algorithmDiscovery;
             const input = [{ data: '$$guid-5' }, 'test-param', true, 12345];
             const storage = {
                 'guid-5': [
@@ -161,9 +160,8 @@ describe('Tests', () => {
         });
         it('should get data from storage by index and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            const { host, port } = config.algorithmDiscovery;
+            const discovery = config.algorithmDiscovery;
             dataServer.setSendingState(taskId, globalInput[0]);
-            const discovery = { host, port };
             const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
             const storage = {
                 'guid-5': { discovery, taskId, index: 2 },
@@ -175,9 +173,8 @@ describe('Tests', () => {
         });
         it('should get data from server by path and index and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            const { host, port } = config.algorithmDiscovery;
             dataServer.setSendingState(taskId, { data: { array: globalInput[0] }, myValue: globalInput[1] });
-            const discovery = { host, port };
+            const discovery = config.algorithmDiscovery;
             const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
             const storage = {
                 'guid-5': { discovery, taskId, path: 'data.array', index: 4 },
@@ -189,10 +186,8 @@ describe('Tests', () => {
         });
         it('should fail to get data from server by path', async () => {
             const taskId = 'taskId:' + uuid();
-            const { host, port } = config.algorithmDiscovery;
             dataServer.setSendingState(taskId, { data: { array: globalInput[0] }, myValue: globalInput[1] });
-            const discovery = { host, port };
-
+            const discovery = config.algorithmDiscovery;
             const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
             const storage = {
                 'guid-5': { discovery, taskId, path: 'no_such' },
@@ -206,12 +201,11 @@ describe('Tests', () => {
     describe('Storage and Server', () => {
         it('should fail to get data from server and get from storage instead', async () => {
             const jobId = 'jobId:' + uuid();
-            const taskId = 'taskId:' + uuid();
             const link = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { data: { array: globalInput[0] } } });
             const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { myValue: globalInput[1] } });
 
-            const { host } = config.algorithmDiscovery;
-            const discovery = { host, port: 5090 };
+            const { host, encoding } = config.algorithmDiscovery;
+            const discovery = { host, encoding, port: 5090 };
 
             const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
             const storage = {

@@ -51,15 +51,14 @@ describe('Getting data from by path', () => {
         expect(reply.message).eq(consts.success);
         expect(reply.data.level2.value1).eq('l1_l2_value_1');
     });
-
-    it.only('Getting data by path as binary', async () => {
+    it('Getting data by path as binary', async () => {
         ds = new DataServer({ port: config.port, encoding: 'bson' });
         const binding = new Promise(resolve => {
             ds.on('bind', () => { resolve() });
         });
         await binding;
         ds.setSendingState(task1, data1);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding: 'json' });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding: 'bson' });
         const reply = await dr.invoke();
         expect(reply.message).eq(consts.success);
         expect(reply.data.level2.value1).eq('l1_l2_value_1');
