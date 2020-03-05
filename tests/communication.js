@@ -41,6 +41,10 @@ describe('Getting data from by path', () => {
     })
     it('Getting data by path as json', async () => {
         ds = new DataServer({ port: config.port });
+        const binding = new Promise(resolve => {
+            ds.on('bind', () => { resolve() });
+        });
+        await binding;
         ds.setSendingState(task1, data1);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1' });
         const reply = await dr.invoke();
@@ -50,6 +54,10 @@ describe('Getting data from by path', () => {
 
     it('Getting data by path as binary', async () => {
         ds = new DataServer({ port: config.port, encoding: 'bson' });
+        const binding = new Promise(resolve => {
+            ds.on('bind', () => { resolve() });
+        });
+        await binding;
         ds.setSendingState(task1, data1);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding: 'bson' });
         const reply = await dr.invoke();
@@ -58,6 +66,10 @@ describe('Getting data from by path', () => {
     });
     it('Getting complete data', async () => {
         ds = new DataServer({ port: config.port });
+        const binding = new Promise(resolve => {
+            ds.on('bind', () => { resolve() });
+        });
+        await binding;
         ds.setSendingState(task1, data1);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1 });
         const reply = await dr.invoke();
@@ -66,6 +78,10 @@ describe('Getting data from by path', () => {
     });
     xit('Getting big data', async () => {
         ds = new DataServer({ port: config.port });
+        const binding = new Promise(resolve => {
+            ds.on('bind', () => { resolve() });
+        });
+        await binding;
         ds.setSendingState(task1, data3);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1 });
         const reply = await dr.invoke();
@@ -74,6 +90,10 @@ describe('Getting data from by path', () => {
     }).timeout(6000);
     it('Getting data after taskId changed', async () => {
         ds = new DataServer({ port: config.port });
+        const binding = new Promise(resolve => {
+            ds.on('bind', () => { resolve() });
+        });
+        await binding;
         ds.setSendingState(task1, data1);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1' });
         let reply = await dr.invoke();
@@ -87,6 +107,10 @@ describe('Getting data from by path', () => {
     });
     it('Failing to get data with old taskId', async () => {
         ds = new DataServer({ port: config.port });
+        const binding = new Promise(resolve => {
+            ds.on('bind', () => { resolve() });
+        });
+        await binding;
         ds.setSendingState(task1, data1);
         ds.setSendingState(task2, data2);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1' });
@@ -96,6 +120,10 @@ describe('Getting data from by path', () => {
     });
     it('Failing to get data when sending ended', async () => {
         ds = new DataServer({ port: config.port });
+        const binding = new Promise(resolve => {
+            ds.on('bind', () => { resolve() });
+        });
+        await binding;
         ds.setSendingState(task1, data1);
         ds.endSendingState();
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1' });
@@ -106,6 +134,10 @@ describe('Getting data from by path', () => {
 
     it('Failing to get data in path that does not exist', async () => {
         ds = new DataServer({ port: config.port });
+        const binding = new Promise(resolve => {
+            ds.on('bind', () => { resolve() });
+        });
+        await binding;
         ds.setSendingState(task1, data1);
         const noneExisting = 'noneExisting';
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting });
@@ -122,12 +154,21 @@ describe('Getting data from by path', () => {
         expect(reply.message).eq(consts.notAvailable);
         expect(reply.reason).eq(`server ${config.host}:${config.port} unreachable`);
     });
-    it('Check number of active connections', async () => {
+    it.only('Check number of active connections', async () => {
         ds = new DataServer({ port: config.port });
+        const binding = new Promise(resolve => {
+            ds.on('bind', () => { resolve() });
+        });
+        await binding;
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
-        ds.decode = async (a) => { await sleep(100); return dr.decode(a) };
+        ds.decode = async (a) => {
+            await sleep(100);
+            return dr.decode(a);
+
+        };
+
         const noneExisting = 'noneExisting';
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting });
         dr.invoke();
@@ -137,6 +178,8 @@ describe('Getting data from by path', () => {
         expect(ds.isServing()).eq(true);
         await sleep(1201);
         expect(ds.isServing()).eq(false);
+
+
     });
 }
 );
