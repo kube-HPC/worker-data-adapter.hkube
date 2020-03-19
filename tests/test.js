@@ -73,8 +73,8 @@ describe('Tests', () => {
             const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: globalInput[1] });
             const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
             const storage = {
-                'guid-5': { storageInfo: link, index: 4 },
-                'guid-6': { storageInfo: link2, index: 2 }
+                'guid-5': { storageInfo: link, path: '4' },
+                'guid-6': { storageInfo: link2, path: '2' }
             };
             const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(globalInput[0][4]);
@@ -86,8 +86,8 @@ describe('Tests', () => {
             const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { myValue: globalInput[1] } });
             const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
             const storage = {
-                'guid-5': { storageInfo: link, path: 'data.array', index: 4 },
-                'guid-6': { storageInfo: link2, path: 'myValue', index: 2 }
+                'guid-5': { storageInfo: link, path: 'data.array.4' },
+                'guid-6': { storageInfo: link2, path: 'myValue.2' }
             };
             const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(globalInput[0][4]);
@@ -125,6 +125,12 @@ describe('Tests', () => {
             const result = dataAdapter.createMetadata({ nodeName: 'green', data, savePaths: ['green.array', 'green.myValue.prop'] });
             expect(result['green.array']).to.eql({ type: 'array', size: globalInput[0].length });
             expect(result['green.myValue.prop']).to.eql({ type: 'string' });
+        });
+        it('should create metadata', async () => {
+            const size = 100000;
+            const data = Array.from(Array(size).keys());
+            const result = dataAdapter.createMetadata({ nodeName: 'green', data, savePaths: ['green'] });
+            expect(result['green']).to.eql({ type: 'array', size });
         });
     });
     describe('Server', () => {
@@ -164,8 +170,8 @@ describe('Tests', () => {
             dataServer.setSendingState(taskId, globalInput[0]);
             const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
             const storage = {
-                'guid-5': { discovery, taskId, index: 2 },
-                'guid-6': { discovery, taskId, index: 4 }
+                'guid-5': { discovery, taskId, path: '2' },
+                'guid-6': { discovery, taskId, path: '4' }
             };
             const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(globalInput[0][2]);
@@ -177,8 +183,8 @@ describe('Tests', () => {
             const discovery = config.algorithmDiscovery;
             const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
             const storage = {
-                'guid-5': { discovery, taskId, path: 'data.array', index: 4 },
-                'guid-6': { discovery, taskId, path: 'myValue', index: 2 }
+                'guid-5': { discovery, taskId, path: 'data.array.4' },
+                'guid-6': { discovery, taskId, path: 'myValue.2' }
             };
             const result = await dataAdapter.getData(input, storage);
             expect(result[0].data).to.eql(globalInput[0][4]);
