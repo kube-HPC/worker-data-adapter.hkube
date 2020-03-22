@@ -46,7 +46,8 @@ describe('Tests', () => {
                 'guid-5': { storageInfo: link, path: 'data.array' },
                 'guid-6': { storageInfo: link2, path: 'myValue' }
             };
-            const result = await dataAdapter.getData(input, storage);
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage });
             expect(result[0].data).to.eql(globalInput[0]);
             expect(result[1].prop).to.eql(globalInput[1]);
         });
@@ -62,7 +63,8 @@ describe('Tests', () => {
                     { storageInfo: link2, path: 'myValue' }
                 ]
             };
-            const result = await dataAdapter.getData(input, storage);
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage });
             expect(result[0].data[0]).to.eql(globalInput[0]);
             expect(result[0].data[1]).to.eql(globalInput[0][2]);
             expect(result[0].data[2]).to.eql(globalInput[1]);
@@ -76,7 +78,8 @@ describe('Tests', () => {
                 'guid-5': { storageInfo: link, path: '4' },
                 'guid-6': { storageInfo: link2, path: '2' }
             };
-            const result = await dataAdapter.getData(input, storage);
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage });
             expect(result[0].data).to.eql(globalInput[0][4]);
             expect(result[1].prop).to.eql(globalInput[1][2]);
         });
@@ -89,7 +92,8 @@ describe('Tests', () => {
                 'guid-5': { storageInfo: link, path: 'data.array.4' },
                 'guid-6': { storageInfo: link2, path: 'myValue.2' }
             };
-            const result = await dataAdapter.getData(input, storage);
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage });
             expect(result[0].data).to.eql(globalInput[0][4]);
             expect(result[1].prop).to.eql(globalInput[1][2]);
         });
@@ -103,7 +107,8 @@ describe('Tests', () => {
                 'guid-5': { storageInfo: link, taskId, path: 'no_such' },
                 'guid-6': { storageInfo: link2, taskId, path: 'no_such' }
             };
-            const result = await dataAdapter.getData(input, storage);
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage });
             expect(result[0].data).to.eql(undefined);
             expect(result[1].prop).to.eql(undefined);
         });
@@ -143,7 +148,8 @@ describe('Tests', () => {
                 'guid-5': { discovery, taskId, path: 'data.array' },
                 'guid-6': { discovery, taskId, path: 'myValue' }
             };
-            const result = await dataAdapter.getData(input, storage);
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage });
             expect(result[0].data).to.eql(globalInput[0]);
             expect(result[1].prop).to.eql(globalInput[1]);
         });
@@ -159,7 +165,8 @@ describe('Tests', () => {
                     { discovery, taskId, path: 'myValue' }
                 ]
             };
-            const result = await dataAdapter.getData(input, storage);
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage });
             expect(result[0].data[0]).to.eql(globalInput[0]);
             expect(result[0].data[1]).to.eql(globalInput[0][2]);
             expect(result[0].data[2]).to.eql(globalInput[1]);
@@ -173,7 +180,8 @@ describe('Tests', () => {
                 'guid-5': { discovery, taskId, path: '2' },
                 'guid-6': { discovery, taskId, path: '4' }
             };
-            const result = await dataAdapter.getData(input, storage);
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage });
             expect(result[0].data).to.eql(globalInput[0][2]);
             expect(result[1].prop).to.eql(globalInput[0][4]);
         });
@@ -186,7 +194,8 @@ describe('Tests', () => {
                 'guid-5': { discovery, taskId, path: 'data.array.4' },
                 'guid-6': { discovery, taskId, path: 'myValue.2' }
             };
-            const result = await dataAdapter.getData(input, storage);
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage });
             expect(result[0].data).to.eql(globalInput[0][4]);
             expect(result[1].prop).to.eql(globalInput[1][2]);
         });
@@ -199,7 +208,8 @@ describe('Tests', () => {
                 'guid-5': { discovery, taskId, path: 'no_such' },
                 'guid-6': { discovery, taskId, path: 'no_such' }
             };
-            const result = await dataAdapter.getData(input, storage);
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage });
             expect(result[0].data).to.eql(undefined);
             expect(result[1].prop).to.eql(undefined);
         });
@@ -218,14 +228,16 @@ describe('Tests', () => {
                 'guid-5': { discovery, storageInfo: link, path: 'data.array' },
                 'guid-6': { discovery, storageInfo: link2, path: 'myValue' }
             };
-            const result = await dataAdapter.getData(input, storage);
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage });
             expect(result[0].data).to.eql(globalInput[0]);
             expect(result[1].prop).to.eql(globalInput[1]);
         });
         it('should fail to find storage key inside input', async () => {
             const input = ['$$guid-5'];
             const storage = { 'guid-no_such': { storageInfo: 'bla' } };
-            await expect(dataAdapter.getData(input, storage)).to.be.rejectedWith(Error, 'unable to find storage key');
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            await expect(dataAdapter.getData({ input, flatInput, storage })).to.be.rejectedWith(Error, 'unable to find storage key');
         });
     });
 });
