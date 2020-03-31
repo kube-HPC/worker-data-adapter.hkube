@@ -24,17 +24,18 @@ const config = {
     storageAdapters: {
         fs: {
             connection: storageFS,
+            encoding: process.env.WORKER_ENCODING || 'bson',
             moduleName: process.env.STORAGE_MODULE || '@hkube/fs-adapter'
         }
     }
 };
 
-const { port } = config.algorithmDiscovery;
-const dataServer = new DataServer({ port, encoding: config.encoding });
+const dataServer = new DataServer(config.algorithmDiscovery);
 
 describe('Tests', () => {
     before(async () => {
         await dataAdapter.init(config);
+        await dataServer.listen();
     });
     describe('Storage', () => {
         it('should get data from storage and parse input data', async () => {
