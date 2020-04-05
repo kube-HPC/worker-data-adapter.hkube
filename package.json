@@ -1,7 +1,7 @@
 {
   "name": "@hkube/worker-data-adapter",
   "version": "1.0.0",
-  "description": "hkube data adapter for get/set data via storage/network",
+  "description": "hkube data adapter for get/set data via storage/networking",
   "main": "index.js",
   "scripts": {
     "lint": "./node_modules/eslint/bin/eslint.js .",
