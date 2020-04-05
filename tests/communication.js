@@ -34,6 +34,8 @@ const sleep = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+const encoding = config.encoding;
+
 describe('Getting data from by path', () => {
     let ds;
     let dr;
@@ -46,15 +48,15 @@ describe('Getting data from by path', () => {
         ds = new DataServer(config);
         await ds.listen();
         ds.setSendingState(task1, data1);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding: config.encoding });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         const reply = await dr.invoke();
         expect(reply.data.level2.value1).eq('l1_l2_value_1');
     });
     it('Getting data by path as binary', async () => {
-        ds = new DataServer({ port: config.port, encoding: 'bson' });
+        ds = new DataServer({ port: config.port, encoding });
         await ds.listen();
         ds.setSendingState(task1, data1);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding: 'bson' });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         const reply = await dr.invoke();
         expect(reply.data.level2.value1).eq('l1_l2_value_1');
     });
@@ -62,7 +64,7 @@ describe('Getting data from by path', () => {
         ds = new DataServer(config);
         await ds.listen();
         ds.setSendingState(task1, data1);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, encoding: config.encoding });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, encoding });
         const reply = await dr.invoke();
         expect(reply.data.level1.level2.value1).eq('l1_l2_value_1');
     });
@@ -70,7 +72,7 @@ describe('Getting data from by path', () => {
         ds = new DataServer(config);
         await ds.listen();
         ds.setSendingState(task1, data3);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, encoding: config.encoding });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, encoding });
         const reply = await dr.invoke();
         expect(reply.message).eq(consts.success);
 
@@ -79,11 +81,11 @@ describe('Getting data from by path', () => {
         ds = new DataServer(config);
         await ds.listen();
         ds.setSendingState(task1, data1);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding: config.encoding });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         let reply = await dr.invoke();
         expect(reply.data.level2.value1).eq('l1_l2_value_1');
         ds.setSendingState(task2, data2);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task2, dataPath: 'level1', encoding: config.encoding });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task2, dataPath: 'level1', encoding });
         reply = await dr.invoke();
         expect(reply.data.level2.value1).eq('d2_l1_l2_value_1');
     });
@@ -92,7 +94,7 @@ describe('Getting data from by path', () => {
         await ds.listen();
         ds.setSendingState(task1, data1);
         ds.setSendingState(task2, data2);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding: config.encoding });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         reply = await dr.invoke();
         expect(reply.error.code).eq(consts.notAvailable);
         expect(reply.error.message).eq(`Current taskId is ${task2}`);
@@ -102,7 +104,7 @@ describe('Getting data from by path', () => {
         await ds.listen();
         ds.setSendingState(task1, data1);
         ds.endSendingState();
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding: config.encoding });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         reply = await dr.invoke();
         expect(reply.error.code).eq(consts.notAvailable);
         expect(reply.error.message).eq(`Current taskId is null`);
@@ -112,14 +114,14 @@ describe('Getting data from by path', () => {
         await ds.listen();
         ds.setSendingState(task1, data1);
         const noneExisting = 'noneExisting';
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding: config.encoding });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
         const reply = await dr.invoke();
         expect(reply.error.code).eq(consts.noSuchDataPath);
         expect(reply.error.message).eq(`${noneExisting} does not exist in data`);
     });
     it('Timing out when there is no server side', async () => {
         const noneExisting = 'noneExisting';
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding: config.encoding });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
         ds = null;
         const reply = await dr.invoke();
         expect(reply.error.code).eq(consts.notAvailable);
@@ -139,9 +141,9 @@ describe('Getting data from by path', () => {
         ds._encoding.decode = wrapper(ds._encoding.decode.bind(ds._encoding));
 
         const noneExisting = 'noneExisting';
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding: config.encoding });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
         dr.invoke();
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding: config.encoding });
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
         dr.invoke();
         await sleep(10);
         expect(ds.isServing()).eq(true);
