@@ -3,9 +3,9 @@ const { DataRequest } = require('../lib/communication/dataClient');
 const DataServer = require('../lib/communication/dataServer');
 const consts = require('../lib/consts/messages').server;
 const config = {
-    port: 3003,
-    host: 'localhost',
-    encoding: process.env.WORKER_ENCODING || 'bson',
+    host: process.env.POD_NAME || '127.0.0.1',
+    port: process.env.DISCOVERY_PORT || 9020,
+    encoding: process.env.WORKER_ENCODING || 'bson'
 }
 const task1 = 'task_1';
 const task2 = 'task_2';
