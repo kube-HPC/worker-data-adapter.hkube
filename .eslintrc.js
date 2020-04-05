@@ -16,7 +16,7 @@ module.exports = {
         "no-param-reassign": "error",
         "prefer-template": "error",
         "no-trailing-spaces": "error",
-        "no-console": "error",
+        "no-console": "off",
         "no-use-before-define": "warn",
         "object-curly-spacing": "error",
         "no-var": "error",

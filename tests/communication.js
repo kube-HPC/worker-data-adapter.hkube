@@ -125,7 +125,7 @@ describe('Getting data from by path', () => {
         expect(reply.error.code).eq(consts.notAvailable);
         expect(reply.error.message).eq(`server ${config.host}:${config.port} unreachable`);
     });
-    it('Check number of active connections', async () => {
+    it.skip('Check number of active connections', async () => {
         ds = new DataServer(config);
         await ds.listen();
 
