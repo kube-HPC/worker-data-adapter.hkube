@@ -1,4 +1,5 @@
 const { expect } = require('chai');
+const { Encoding } = require('@hkube/encoding');
 const { DataRequest } = require('../lib/communication/dataClient');
 const DataServer = require('../lib/communication/dataServer');
 const consts = require('../lib/consts/messages').server;
@@ -9,7 +10,7 @@ const config = {
 }
 const task1 = 'task_1';
 const task2 = 'task_2';
-const data1 = {
+let data1 = {
     level1: {
         level2: {
             value1: 'l1_l2_value_1',
@@ -19,7 +20,7 @@ const data1 = {
     },
     value1: 'value_1'
 };
-const data2 = {
+let data2 = {
     level1: {
         level2: {
             value1: 'd2_l1_l2_value_1',
@@ -29,12 +30,17 @@ const data2 = {
     },
     value1: 'd2_value_1'
 };
-const data3 = new Buffer(1024 * 1024 * 100);
+const buffer = Buffer.alloc(100);
+
+const encoding = config.encoding;
+const encodingLib = new Encoding({ type: encoding });
+data1 = encodingLib.encode(data1);
+data2 = encodingLib.encode(data2);
+const data3 = encodingLib.encode(buffer);
+
 const sleep = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-const encoding = config.encoding;
 
 describe('Getting data from by path', () => {
     let ds;
@@ -50,7 +56,7 @@ describe('Getting data from by path', () => {
         ds.setSendingState(task1, data1);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         const reply = await dr.invoke();
-        expect(reply.data.level2.value1).eq('l1_l2_value_1');
+        expect(reply.level2.value1).eq('l1_l2_value_1');
     });
     it('Getting data by path as binary', async () => {
         ds = new DataServer({ port: config.port, encoding });
@@ -58,7 +64,7 @@ describe('Getting data from by path', () => {
         ds.setSendingState(task1, data1);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         const reply = await dr.invoke();
-        expect(reply.data.level2.value1).eq('l1_l2_value_1');
+        expect(reply.level2.value1).eq('l1_l2_value_1');
     });
     it('Getting complete data', async () => {
         ds = new DataServer(config);
@@ -66,28 +72,28 @@ describe('Getting data from by path', () => {
         ds.setSendingState(task1, data1);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, encoding });
         const reply = await dr.invoke();
-        expect(reply.data.level1.level2.value1).eq('l1_l2_value_1');
+        expect(reply.level1.level2.value1).eq('l1_l2_value_1');
     });
-    xit('Getting big data', async () => {
+    it('Getting big data', async () => {
         ds = new DataServer(config);
         await ds.listen();
         ds.setSendingState(task1, data3);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, encoding });
         const reply = await dr.invoke();
-        expect(reply.message).eq(consts.success);
+        expect(reply).eql(buffer);
 
-    }).timeout(6000);
+    });
     it('Getting data after taskId changed', async () => {
         ds = new DataServer(config);
         await ds.listen();
         ds.setSendingState(task1, data1);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         let reply = await dr.invoke();
-        expect(reply.data.level2.value1).eq('l1_l2_value_1');
+        expect(reply.level2.value1).eq('l1_l2_value_1');
         ds.setSendingState(task2, data2);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task2, dataPath: 'level1', encoding });
         reply = await dr.invoke();
-        expect(reply.data.level2.value1).eq('d2_l1_l2_value_1');
+        expect(reply.level2.value1).eq('d2_l1_l2_value_1');
     });
     it('Failing to get data with old taskId', async () => {
         ds = new DataServer(config);

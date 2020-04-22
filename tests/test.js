@@ -1,6 +1,8 @@
 const chai = require('chai');
 chai.use(require('chai-as-promised'))
 const uuid = require('uuid/v4');
+const clone = require('clone');
+const { Encoding } = require('@hkube/encoding');
 const expect = chai.expect
 const { dataAdapter, DataServer } = require('../index.js');
 const storageManager = require('@hkube/storage-manager');
@@ -31,6 +33,10 @@ const config = {
 };
 
 const dataServer = new DataServer(config.algorithmDiscovery);
+const decodedData = { data: { array: globalInput[0] }, myValue: globalInput[1] }
+const encodingLib = new Encoding({ type: config.algorithmDiscovery.encoding });
+const encodedData = encodingLib.encode(decodedData);
+const mainInput = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
 
 describe('Tests', () => {
     before(async () => {
@@ -42,7 +48,7 @@ describe('Tests', () => {
             const jobId = 'jobId:' + uuid();
             const link = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { data: { array: globalInput[0] } } });
             const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { myValue: globalInput[1] } });
-            const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
+            const input = clone(mainInput);
             const storage = {
                 'guid-5': { storageInfo: link, path: 'data.array' },
                 'guid-6': { storageInfo: link2, path: 'myValue' }
@@ -74,7 +80,7 @@ describe('Tests', () => {
             const jobId = 'jobId:' + uuid();
             const link = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: globalInput[0] });
             const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: globalInput[1] });
-            const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
+            const input = clone(mainInput);
             const storage = {
                 'guid-5': { storageInfo: link, path: '4' },
                 'guid-6': { storageInfo: link2, path: '2' }
@@ -88,7 +94,7 @@ describe('Tests', () => {
             const jobId = 'jobId:' + uuid();
             const link = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { data: { array: globalInput[0] } } });
             const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { myValue: globalInput[1] } });
-            const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
+            const input = clone(mainInput);
             const storage = {
                 'guid-5': { storageInfo: link, path: 'data.array.4' },
                 'guid-6': { storageInfo: link2, path: 'myValue.2' }
@@ -103,7 +109,7 @@ describe('Tests', () => {
             const taskId = 'taskId:' + uuid();
             const link = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { data: { array: globalInput[0] } } });
             const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { myValue: globalInput[1] } });
-            const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
+            const input = clone(mainInput);
             const storage = {
                 'guid-5': { storageInfo: link, taskId, path: 'no_such' },
                 'guid-6': { storageInfo: link2, taskId, path: 'no_such' }
@@ -142,9 +148,9 @@ describe('Tests', () => {
     describe('Server', () => {
         it('should get data from server and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            dataServer.setSendingState(taskId, { data: { array: globalInput[0] }, myValue: globalInput[1] });
+            dataServer.setSendingState(taskId, encodedData);
             const discovery = config.algorithmDiscovery;
-            const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
+            const input = clone(clone(mainInput));
             const storage = {
                 'guid-5': { discovery, taskId, path: 'data.array' },
                 'guid-6': { discovery, taskId, path: 'myValue' }
@@ -156,7 +162,7 @@ describe('Tests', () => {
         });
         it('should get multiple data from server and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            dataServer.setSendingState(taskId, { data: { array: globalInput[0] }, myValue: globalInput[1] });
+            dataServer.setSendingState(taskId, encodedData);
             const discovery = config.algorithmDiscovery;
             const input = [{ data: '$$guid-5' }, 'test-param', true, 12345];
             const storage = {
@@ -175,8 +181,8 @@ describe('Tests', () => {
         it('should get data from storage by index and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
             const discovery = config.algorithmDiscovery;
-            dataServer.setSendingState(taskId, globalInput[0]);
-            const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
+            dataServer.setSendingState(taskId, encodingLib.encode(globalInput[0]));
+            const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, taskId, path: '2' },
                 'guid-6': { discovery, taskId, path: '4' }
@@ -188,9 +194,9 @@ describe('Tests', () => {
         });
         it('should get data from server by path and index and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            dataServer.setSendingState(taskId, { data: { array: globalInput[0] }, myValue: globalInput[1] });
+            dataServer.setSendingState(taskId, encodedData);
             const discovery = config.algorithmDiscovery;
-            const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
+            const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, taskId, path: 'data.array.4' },
                 'guid-6': { discovery, taskId, path: 'myValue.2' }
@@ -202,9 +208,9 @@ describe('Tests', () => {
         });
         it('should fail to get data from server by path', async () => {
             const taskId = 'taskId:' + uuid();
-            dataServer.setSendingState(taskId, { data: { array: globalInput[0] }, myValue: globalInput[1] });
+            dataServer.setSendingState(taskId, encodedData);
             const discovery = config.algorithmDiscovery;
-            const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
+            const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, taskId, path: 'no_such' },
                 'guid-6': { discovery, taskId, path: 'no_such' }
@@ -224,7 +230,7 @@ describe('Tests', () => {
             const { host, encoding } = config.algorithmDiscovery;
             const discovery = { host, encoding, port: 5090 };
 
-            const input = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
+            const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, storageInfo: link, path: 'data.array' },
                 'guid-6': { discovery, storageInfo: link2, path: 'myValue' }
@@ -240,5 +246,20 @@ describe('Tests', () => {
             const flatInput = dataAdapter.flatInput({ input, storage });
             await expect(dataAdapter.getData({ input, flatInput, storage })).to.be.rejectedWith(Error, 'unable to find storage key');
         });
+    });
+    describe('createStorageInfo', () => {
+        it('should get data from storage and parse input data', async () => {
+            const jobId = 'jobId:' + uuid();
+            const taskId = 'taskId:' + uuid();
+            const nodeName = 'green';
+            const data = encodedData;
+
+            const info = dataAdapter.createStorageInfo({ jobId, taskId, nodeName, data, savePaths: ['green'] });
+            expect(info).to.have.property('storageInfo');
+            expect(info).to.have.property('metadata');
+            expect(info.storageInfo).to.have.property('path');
+            expect(info.storageInfo).to.have.property('size');
+        });
+        
     });
 });
