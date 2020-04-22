@@ -156,5 +156,27 @@ describe('Getting data from by path', () => {
         await sleep(500);
         expect(ds.isServing()).eq(false);
     });
+
+    it.only('Check waitTill Done serving', async () => {
+        ds = new DataServer(config);
+        await ds.listen();
+        let served = false
+        const wrapper = (fn) => {
+            const inner = async (...args) => {
+                await sleep(1000)
+                served = true || served;
+                return fn(...args);
+            }
+            return inner;
+        }
+        ds._encoding.decode = wrapper(ds._encoding.decode.bind(ds._encoding));
+
+        const noneExisting = 'noneExisting';
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
+        dr.invoke();
+        await sleep(100);
+        await ds.waitTillServingIsDone();
+        expect(served).eq(true);
+    });
 });
 
