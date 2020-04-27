@@ -79,7 +79,10 @@ describe('Getting data from by path', () => {
         await ds.listen();
         ds.setSendingState(task1, data3);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, encoding });
+        const startTime = new Date().getTime();
         const reply = await dr.invoke();
+        const endTime = new Date().getTime();
+        console.log('time:' + (endTime - startTime))
         expect(reply).eql(buffer);
 
     });
@@ -133,7 +136,7 @@ describe('Getting data from by path', () => {
         expect(reply.error.code).eq(consts.notAvailable);
         expect(reply.error.message).eq(`server ${config.host}:${config.port} unreachable`);
     });
-    it.skip('Check number of active connections', async () => {
+    it('Check number of active connections', async () => {
         ds = new DataServer(config);
         await ds.listen();
 
@@ -153,18 +156,16 @@ describe('Getting data from by path', () => {
         dr.invoke();
         await sleep(10);
         expect(ds.isServing()).eq(true);
-        await sleep(500);
+        await sleep(150);
         expect(ds.isServing()).eq(false);
     });
-
-    it.only('Check waitTill Done serving', async () => {
+    it('Check waitTill Done serving', async () => {
         ds = new DataServer(config);
         await ds.listen();
-        let served = false
+
         const wrapper = (fn) => {
             const inner = async (...args) => {
-                await sleep(1000)
-                served = true || served;
+                await sleep(1000);
                 return fn(...args);
             }
             return inner;
@@ -174,9 +175,12 @@ describe('Getting data from by path', () => {
         const noneExisting = 'noneExisting';
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
         dr.invoke();
-        await sleep(100);
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
+        dr.invoke();
+        await sleep(10);
+        expect(ds.isServing()).eq(true);
         await ds.waitTillServingIsDone();
-        expect(served).eq(true);
+        expect(ds.isServing()).eq(false);
     });
 });
 
