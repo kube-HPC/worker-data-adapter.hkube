@@ -46,7 +46,7 @@ describe('Getting data from by path', () => {
     let ds;
     let dr;
     afterEach('close sockets', () => {
-        if (ds != null) {
+        if (ds != null && !ds._adapter._responder.closed) {
             ds.close();
         }
     })
@@ -107,6 +107,25 @@ describe('Getting data from by path', () => {
         reply = await dr.invoke();
         expect(reply.error.code).eq(consts.notAvailable);
         expect(reply.error.message).eq(`Current taskId is ${task2}`);
+    });
+    it('Disconnect during invoke', async () => {
+        ds = new DataServer(config);
+        await ds.listen();
+        const wrapper = (fn) => {
+            const inner = async (...args) => {
+                await sleep(100);
+                return fn(...args);
+            }
+            return inner;
+        }
+        ds._encoding.decode = wrapper(ds._encoding.decode.bind(ds._encoding));
+        const noneExisting = 'noneExisting';
+        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
+        replyPromise = dr.invoke();
+        ds.close();
+        reply = await replyPromise;
+        expect(reply.error.code).eq(consts.unknown);
+        expect(reply.error.message).eq('early disconnect');
     });
     it('Failing to get data when sending ended', async () => {
         ds = new DataServer(config);
