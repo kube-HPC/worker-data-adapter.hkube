@@ -19,8 +19,8 @@
   "author": "Hkube",
   "license": "ISC",
   "dependencies": {
-    "@hkube/encoding": "^1.0.8",
-    "@hkube/storage-manager": "^2.0.1",
+    "@hkube/encoding": "^1.0.11",
+    "@hkube/storage-manager": "^2.0.8",
     "clone": "^2.1.2",
     "flat": "^5.0.0",
     "object-path": "^0.11.4",
