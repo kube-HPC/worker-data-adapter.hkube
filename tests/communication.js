@@ -105,8 +105,8 @@ describe('Getting data from by path', () => {
         ds.setSendingState(task2, data2);
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         reply = await dr.invoke();
-        expect(reply.error.code).eq(consts.notAvailable);
-        expect(reply.error.message).eq(`Current taskId is ${task2}`);
+        expect(reply.hkube_error.code).eq(consts.notAvailable);
+        expect(reply.hkube_error.message).eq(`Current taskId is ${task2}`);
     });
     it('Disconnect during invoke', async () => {
         ds = new DataServer(config);
@@ -124,8 +124,8 @@ describe('Getting data from by path', () => {
         replyPromise = dr.invoke();
         ds.close();
         reply = await replyPromise;
-        expect(reply.error.code).eq(consts.unknown);
-        expect(reply.error.message).eq('early disconnect');
+        expect(reply.hkube_error.code).eq(consts.unknown);
+        expect(reply.hkube_error.message).eq('early disconnect');
     });
     it('Failing to get data when sending ended', async () => {
         ds = new DataServer(config);
@@ -134,8 +134,8 @@ describe('Getting data from by path', () => {
         ds.endSendingState();
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         reply = await dr.invoke();
-        expect(reply.error.code).eq(consts.notAvailable);
-        expect(reply.error.message).eq(`Current taskId is null`);
+        expect(reply.hkube_error.code).eq(consts.notAvailable);
+        expect(reply.hkube_error.message).eq(`Current taskId is null`);
     });
     it('Failing to get data in path that does not exist', async () => {
         ds = new DataServer(config);
@@ -144,16 +144,16 @@ describe('Getting data from by path', () => {
         const noneExisting = 'noneExisting';
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
         const reply = await dr.invoke();
-        expect(reply.error.code).eq(consts.noSuchDataPath);
-        expect(reply.error.message).eq(`${noneExisting} does not exist in data`);
+        expect(reply.hkube_error.code).eq(consts.noSuchDataPath);
+        expect(reply.hkube_error.message).eq(`${noneExisting} does not exist in data`);
     });
     it('Timing out when there is no server side', async () => {
         const noneExisting = 'noneExisting';
         dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
         ds = null;
         const reply = await dr.invoke();
-        expect(reply.error.code).eq(consts.notAvailable);
-        expect(reply.error.message).eq(`server ${config.host}:${config.port} unreachable`);
+        expect(reply.hkube_error.code).eq(consts.notAvailable);
+        expect(reply.hkube_error.message).eq(`server ${config.host}:${config.port} unreachable`);
     });
     it('Check number of active connections', async () => {
         ds = new DataServer(config);

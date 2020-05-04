@@ -260,6 +260,6 @@ describe('Tests', () => {
             expect(info.storageInfo).to.have.property('path');
             expect(info.storageInfo).to.have.property('size');
         });
-        
+
     });
 });
