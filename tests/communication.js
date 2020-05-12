@@ -149,7 +149,7 @@ describe('Getting data from by path', () => {
         await sleep(150);
         expect(ds.isServing()).eq(false);
     });
-    it('Check waitTill Done serving', async () => {
+    it.skip('Check waitTill Done serving', async () => {
         ds = new DataServer(config);
         await ds.listen();
 
