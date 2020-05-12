@@ -1,13 +1,8 @@
 const { expect } = require('chai');
-const { Encoding } = require('@hkube/encoding');
-const { DataRequest } = require('../lib/communication/dataClient');
-const DataServer = require('../lib/communication/dataServer');
+const { DataRequest } = require('../lib/communication/data-client');
+const DataServer = require('../lib/communication/data-server');
 const consts = require('../lib/consts/messages').server;
-const config = {
-    host: process.env.POD_NAME || '127.0.0.1',
-    port: process.env.DISCOVERY_PORT || 9020,
-    encoding: process.env.WORKER_ENCODING || 'bson'
-}
+const config = require('./config').discovery;
 const task1 = 'task_1';
 const task2 = 'task_2';
 let data1 = {
@@ -30,13 +25,9 @@ let data2 = {
     },
     value1: 'd2_value_1'
 };
-const buffer = Buffer.alloc(100);
+const data3 = Buffer.alloc(100);
 
 const encoding = config.encoding;
-const encodingLib = new Encoding({ type: encoding });
-data1 = encodingLib.encode(data1);
-data2 = encodingLib.encode(data2);
-const data3 = encodingLib.encode(buffer);
 
 const sleep = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -44,7 +35,6 @@ const sleep = (ms) => {
 
 describe('Getting data from by path', () => {
     let ds;
-    let dr;
     afterEach('close sockets', () => {
         if (ds != null && !ds._adapter._responder.closed) {
             ds.close();
@@ -54,7 +44,7 @@ describe('Getting data from by path', () => {
         ds = new DataServer(config);
         await ds.listen();
         ds.setSendingState(task1, data1);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
+        const dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         const reply = await dr.invoke();
         expect(reply.level2.value1).eq('l1_l2_value_1');
     });
@@ -62,7 +52,7 @@ describe('Getting data from by path', () => {
         ds = new DataServer({ port: config.port, encoding });
         await ds.listen();
         ds.setSendingState(task1, data1);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
+        const dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         const reply = await dr.invoke();
         expect(reply.level2.value1).eq('l1_l2_value_1');
     });
@@ -78,24 +68,24 @@ describe('Getting data from by path', () => {
         ds = new DataServer(config);
         await ds.listen();
         ds.setSendingState(task1, data3);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, encoding });
+        const dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, encoding });
         const startTime = new Date().getTime();
         const reply = await dr.invoke();
         const endTime = new Date().getTime();
         console.log('time:' + (endTime - startTime))
-        expect(reply).eql(buffer);
+        expect(reply).eql(data3);
 
     });
     it('Getting data after taskId changed', async () => {
         ds = new DataServer(config);
         await ds.listen();
         ds.setSendingState(task1, data1);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
+        const dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         let reply = await dr.invoke();
         expect(reply.level2.value1).eq('l1_l2_value_1');
         ds.setSendingState(task2, data2);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task2, dataPath: 'level1', encoding });
-        reply = await dr.invoke();
+        const dr2 = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task2, dataPath: 'level1', encoding });
+        reply = await dr2.invoke();
         expect(reply.level2.value1).eq('d2_l1_l2_value_1');
     });
     it('Failing to get data with old taskId', async () => {
@@ -103,17 +93,16 @@ describe('Getting data from by path', () => {
         await ds.listen();
         ds.setSendingState(task1, data1);
         ds.setSendingState(task2, data2);
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
+        const dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
         reply = await dr.invoke();
-        expect(reply.hkube_error.code).eq(consts.notAvailable);
-        expect(reply.hkube_error.message).eq(`Current taskId is ${task2}`);
+        expect(reply).eql(data1.level1);
     });
-    it('Disconnect during invoke', async () => {
+    it.skip('Disconnect during invoke', async () => {
         ds = new DataServer(config);
         await ds.listen();
         const wrapper = (fn) => {
             const inner = async (...args) => {
-                await sleep(100);
+                await sleep(500);
                 return fn(...args);
             }
             return inner;
@@ -124,55 +113,37 @@ describe('Getting data from by path', () => {
         replyPromise = dr.invoke();
         ds.close();
         reply = await replyPromise;
+
         expect(reply.hkube_error.code).eq(consts.unknown);
         expect(reply.hkube_error.message).eq('early disconnect');
-    });
-    it('Failing to get data when sending ended', async () => {
-        ds = new DataServer(config);
-        await ds.listen();
-        ds.setSendingState(task1, data1);
-        ds.endSendingState();
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: 'level1', encoding });
-        reply = await dr.invoke();
-        expect(reply.hkube_error.code).eq(consts.notAvailable);
-        expect(reply.hkube_error.message).eq(`Current taskId is null`);
     });
     it('Failing to get data in path that does not exist', async () => {
         ds = new DataServer(config);
         await ds.listen();
         ds.setSendingState(task1, data1);
         const noneExisting = 'noneExisting';
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
+        const dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
         const reply = await dr.invoke();
         expect(reply.hkube_error.code).eq(consts.noSuchDataPath);
         expect(reply.hkube_error.message).eq(`${noneExisting} does not exist in data`);
     });
     it('Timing out when there is no server side', async () => {
         const noneExisting = 'noneExisting';
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
+        const dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
         ds = null;
         const reply = await dr.invoke();
         expect(reply.hkube_error.code).eq(consts.notAvailable);
         expect(reply.hkube_error.message).eq(`server ${config.host}:${config.port} unreachable`);
     });
-    it('Check number of active connections', async () => {
+    it.skip('Check number of active connections', async () => {
         ds = new DataServer(config);
         await ds.listen();
 
-        const wrapper = (fn) => {
-            const inner = async (...args) => {
-                await sleep(100);
-                return fn(...args);
-            }
-            return inner;
-        }
-        ds._encoding.decode = wrapper(ds._encoding.decode.bind(ds._encoding));
-
         const noneExisting = 'noneExisting';
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
+        const dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
         dr.invoke();
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
-        dr.invoke();
+        const dr2 = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
+        dr2.invoke();
         await sleep(10);
         expect(ds.isServing()).eq(true);
         await sleep(150);
@@ -182,20 +153,11 @@ describe('Getting data from by path', () => {
         ds = new DataServer(config);
         await ds.listen();
 
-        const wrapper = (fn) => {
-            const inner = async (...args) => {
-                await sleep(1000);
-                return fn(...args);
-            }
-            return inner;
-        }
-        ds._encoding.decode = wrapper(ds._encoding.decode.bind(ds._encoding));
-
         const noneExisting = 'noneExisting';
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
+        const dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
         dr.invoke();
-        dr = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
-        dr.invoke();
+        const dr2 = new DataRequest({ address: { port: config.port, host: config.host }, taskId: task1, dataPath: noneExisting, encoding });
+        dr2.invoke();
         await sleep(10);
         expect(ds.isServing()).eq(true);
         await ds.waitTillServingIsDone();

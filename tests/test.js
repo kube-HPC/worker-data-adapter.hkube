@@ -3,39 +3,14 @@ chai.use(require('chai-as-promised'))
 const uuid = require('uuid/v4');
 const clone = require('clone');
 const { Encoding } = require('@hkube/encoding');
+const storageManager = require('@hkube/storage-manager');
 const expect = chai.expect
 const { dataAdapter, DataServer } = require('../index.js');
-const storageManager = require('@hkube/storage-manager');
+const config = require('./config');
 const globalInput = [[3, 6, 9, 1, 5, 4, 8, 7, 2], 'asc'];
+const dataServer = new DataServer(config.discovery);
+const encodedData = { data: { array: globalInput[0] }, myValue: globalInput[1] }
 
-const storageFS = {
-    baseDirectory: process.env.BASE_FS_ADAPTER_DIRECTORY || '/var/tmp/fs/storage',
-    binary: !!process.env.STORAGE_BINARY
-};
-
-const config = {
-    clusterName: process.env.CLUSTER_NAME || 'local',
-    defaultStorage: process.env.DEFAULT_STORAGE || 'fs',
-    enableCache: false,
-    encoding: process.env.WORKER_ENCODING || 'bson',
-    algorithmDiscovery: {
-        host: process.env.POD_NAME || '127.0.0.1',
-        port: process.env.DISCOVERY_PORT || 9020,
-        encoding: process.env.WORKER_ENCODING || 'bson'
-    },
-    storageAdapters: {
-        fs: {
-            connection: storageFS,
-            encoding: process.env.WORKER_ENCODING || 'bson',
-            moduleName: process.env.STORAGE_MODULE || '@hkube/fs-adapter'
-        }
-    }
-};
-
-const dataServer = new DataServer(config.algorithmDiscovery);
-const decodedData = { data: { array: globalInput[0] }, myValue: globalInput[1] }
-const encodingLib = new Encoding({ type: config.algorithmDiscovery.encoding });
-const encodedData = encodingLib.encode(decodedData);
 const mainInput = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
 
 describe('Tests', () => {
@@ -58,7 +33,7 @@ describe('Tests', () => {
             expect(result[0].data).to.eql(globalInput[0]);
             expect(result[1].prop).to.eql(globalInput[1]);
         });
-        it('should get multiple data from storage and parse input data', async () => {
+        it.skip('should get multiple data from storage and parse input data', async () => {
             const jobId = 'jobId:' + uuid();
             const link = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { data: { array: globalInput[0] } } });
             const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { myValue: globalInput[1] } });
@@ -149,7 +124,7 @@ describe('Tests', () => {
         it('should get data from server and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
             dataServer.setSendingState(taskId, encodedData);
-            const discovery = config.algorithmDiscovery;
+            const discovery = config.discovery;
             const input = clone(clone(mainInput));
             const storage = {
                 'guid-5': { discovery, taskId, path: 'data.array' },
@@ -160,16 +135,16 @@ describe('Tests', () => {
             expect(result[0].data).to.eql(globalInput[0]);
             expect(result[1].prop).to.eql(globalInput[1]);
         });
-        it('should get multiple data from server and parse input data', async () => {
+        it.skip('should get multiple data from server and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
             dataServer.setSendingState(taskId, encodedData);
-            const discovery = config.algorithmDiscovery;
+            const discovery = config.discovery;
             const input = [{ data: '$$guid-5' }, 'test-param', true, 12345];
             const storage = {
                 'guid-5': [
-                    { discovery, taskId, path: 'data.array' },
-                    { discovery, taskId, path: 'data.array.2' },
-                    { discovery, taskId, path: 'myValue' }
+                    { discovery, tasks: [taskId], path: 'data.array' },
+                    { discovery, tasks: [taskId], path: 'data.array.2' },
+                    { discovery, tasks: [taskId], path: 'myValue' }
                 ]
             };
             const flatInput = dataAdapter.flatInput({ input, storage });
@@ -180,8 +155,8 @@ describe('Tests', () => {
         });
         it('should get data from storage by index and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            const discovery = config.algorithmDiscovery;
-            dataServer.setSendingState(taskId, encodingLib.encode(globalInput[0]));
+            const discovery = config.discovery;
+            dataServer.setSendingState(taskId, globalInput[0]);
             const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, taskId, path: '2' },
@@ -195,7 +170,7 @@ describe('Tests', () => {
         it('should get data from server by path and index and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
             dataServer.setSendingState(taskId, encodedData);
-            const discovery = config.algorithmDiscovery;
+            const discovery = config.discovery;
             const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, taskId, path: 'data.array.4' },
@@ -209,7 +184,7 @@ describe('Tests', () => {
         it('should fail to get data from server by path', async () => {
             const taskId = 'taskId:' + uuid();
             dataServer.setSendingState(taskId, encodedData);
-            const discovery = config.algorithmDiscovery;
+            const discovery = config.discovery;
             const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, taskId, path: 'no_such' },
@@ -227,7 +202,7 @@ describe('Tests', () => {
             const link = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { data: { array: globalInput[0] } } });
             const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { myValue: globalInput[1] } });
 
-            const { host, encoding } = config.algorithmDiscovery;
+            const { host, encoding } = config.discovery;
             const discovery = { host, encoding, port: 5090 };
 
             const input = clone(mainInput);
@@ -245,6 +220,29 @@ describe('Tests', () => {
             const storage = { 'guid-no_such': { storageInfo: 'bla' } };
             const flatInput = dataAdapter.flatInput({ input, storage });
             await expect(dataAdapter.getData({ input, flatInput, storage })).to.be.rejectedWith(Error, 'unable to find storage key');
+        });
+        it('should fail to get data from server and get from storage instead', async () => {
+            const jobId = 'jobId:' + uuid();
+            const taskId1 = 'taskId:' + uuid();
+            const taskId2 = 'taskId:' + uuid();
+            const taskId3 = 'taskId:' + uuid();
+            const data1 = { data: { array: globalInput[0] } };
+            const data2 = { myValue: globalInput[1] };
+            dataServer.setSendingState(taskId1, data1);
+            dataServer.setSendingState(taskId2, data2);
+            await storageManager.hkube.put({ jobId, taskId: taskId1, data: data1 });
+            await storageManager.hkube.put({ jobId, taskId: taskId2, data: data2 });
+            await storageManager.hkube.put({ jobId, taskId: taskId3, data: data2 });
+            const discovery = config.discovery;
+            const input = clone(mainInput);
+            const storage = {
+                'guid-5': [{ discovery, tasks: [taskId1, taskId1], path: 'data.array' }],
+                'guid-6': [{ discovery, tasks: [taskId1, taskId2, taskId3], path: 'myValue' }]
+            };
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ jobId, input, flatInput, storage });
+            expect(result[0].data).to.eql([globalInput[0], globalInput[0]]);
+            expect(result[1].prop).to.eql([undefined, globalInput[1], globalInput[1]]);
         });
     });
     describe('createStorageInfo', () => {
