@@ -14,7 +14,7 @@ cache:
     - node_modules
 script:
   - npm run lint && npm run test:cov
-after_script: "npm run coverage"
+# after_script: "npm run coverage"
 after_success:
   - |
     if ([ "$TRAVIS_BRANCH" == "master" ] || [ ! -z "$TRAVIS_TAG" ]) && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
