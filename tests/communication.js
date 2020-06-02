@@ -36,7 +36,7 @@ const sleep = (ms) => {
 describe('Getting data from by path', () => {
     let ds;
     afterEach('close sockets', () => {
-        if (ds != null && !ds._adapter._responder.closed) {
+        if (ds != null) {
             ds.close();
         }
     })

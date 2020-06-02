@@ -2,14 +2,16 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'))
 const uuid = require('uuid/v4');
 const clone = require('clone');
-const { Encoding } = require('@hkube/encoding');
 const storageManager = require('@hkube/storage-manager');
 const expect = chai.expect
 const { dataAdapter, DataServer } = require('../index.js');
 const Cache = require('../lib/communication/data-server-cache');
 const config = require('./config');
 const globalInput = [[3, 6, 9, 1, 5, 4, 8, 7, 2], 'asc'];
-const dataServer = new DataServer(config.discovery);
+
+const discovery = { ...config.discovery, port: 9021 };
+
+const dataServer = new DataServer(discovery);
 const encodedData = { data: { array: globalInput[0] }, myValue: globalInput[1] }
 
 const mainInput = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
@@ -125,7 +127,6 @@ describe('Tests', () => {
         it('should get data from server and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
             dataServer.setSendingState(taskId, encodedData);
-            const discovery = config.discovery;
             const input = clone(clone(mainInput));
             const storage = {
                 'guid-5': { discovery, taskId, path: 'data.array' },
@@ -139,7 +140,6 @@ describe('Tests', () => {
         it.skip('should get multiple data from server and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
             dataServer.setSendingState(taskId, encodedData);
-            const discovery = config.discovery;
             const input = [{ data: '$$guid-5' }, 'test-param', true, 12345];
             const storage = {
                 'guid-5': [
@@ -156,7 +156,6 @@ describe('Tests', () => {
         });
         it('should get data from storage by index and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            const discovery = config.discovery;
             dataServer.setSendingState(taskId, globalInput[0]);
             const input = clone(mainInput);
             const storage = {
@@ -171,7 +170,6 @@ describe('Tests', () => {
         it('should get data from server by path and index and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
             dataServer.setSendingState(taskId, encodedData);
-            const discovery = config.discovery;
             const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, taskId, path: 'data.array.4' },
@@ -185,7 +183,6 @@ describe('Tests', () => {
         it('should fail to get data from server by path', async () => {
             const taskId = 'taskId:' + uuid();
             dataServer.setSendingState(taskId, encodedData);
-            const discovery = config.discovery;
             const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, taskId, path: 'no_such' },
@@ -203,13 +200,12 @@ describe('Tests', () => {
             const link = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { data: { array: globalInput[0] } } });
             const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { myValue: globalInput[1] } });
 
-            const { host, encoding } = config.discovery;
-            const discovery = { host, encoding, port: 5090 };
+            const discovery2 = { ...discovery, port: 5090 };
 
             const input = clone(mainInput);
             const storage = {
-                'guid-5': { discovery, storageInfo: link, path: 'data.array' },
-                'guid-6': { discovery, storageInfo: link2, path: 'myValue' }
+                'guid-5': { discovery: discovery2, storageInfo: link, path: 'data.array' },
+                'guid-6': { discovery: discovery2, storageInfo: link2, path: 'myValue' }
             };
             const flatInput = dataAdapter.flatInput({ input, storage });
             const result = await dataAdapter.getData({ input, flatInput, storage });
@@ -234,7 +230,6 @@ describe('Tests', () => {
             await storageManager.hkube.put({ jobId, taskId: taskId1, data: data1 });
             await storageManager.hkube.put({ jobId, taskId: taskId2, data: data2 });
             await storageManager.hkube.put({ jobId, taskId: taskId3, data: data2 });
-            const discovery = config.discovery;
             const input = clone(mainInput);
             const storage = {
                 'guid-5': [{ discovery, tasks: [taskId1, taskId1], path: 'data.array' }],
