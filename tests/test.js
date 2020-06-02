@@ -6,6 +6,7 @@ const { Encoding } = require('@hkube/encoding');
 const storageManager = require('@hkube/storage-manager');
 const expect = chai.expect
 const { dataAdapter, DataServer } = require('../index.js');
+const Cache = require('../lib/communication/data-server-cache');
 const config = require('./config');
 const globalInput = [[3, 6, 9, 1, 5, 4, 8, 7, 2], 'asc'];
 const dataServer = new DataServer(config.discovery);
@@ -257,6 +258,24 @@ describe('Tests', () => {
             expect(info).to.have.property('metadata');
             expect(info.storageInfo).to.have.property('path');
             expect(info.storageInfo).to.have.property('size');
+        });
+
+    });
+    describe('Cache', () => {
+        it('should update cache until max size', async () => {
+            const taskId1 = 'taskId:' + uuid();
+            const taskId2 = 'taskId:' + uuid();
+            const taskId3 = 'taskId:' + uuid();
+            const taskId4 = 'taskId:' + uuid();
+            const data = encodedData;
+            const maxCacheSize = 3;
+            const cache = new Cache({ maxCacheSize });
+            cache.update(taskId1, data);
+            cache.update(taskId2, data);
+            cache.update(taskId3, data);
+            cache.update(taskId4, data);
+
+            expect(cache.size()).to.equal(maxCacheSize);
         });
 
     });
