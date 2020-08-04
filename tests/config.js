@@ -21,7 +21,8 @@ config.discovery = {
     host: process.env.POD_NAME || '127.0.0.1',
     port: process.env.DISCOVERY_PORT || 9020,
     encoding: process.env.DISCOVERY_ENCODING || 'bson',
-    timeout: process.env.DISCOVERY_TIMEOUT || 60000,
+    timeout: process.env.DISCOVERY_TIMEOUT || 1000,
+    concurrency: process.env.DISCOVERY_CONCURRENCY || 50,
     maxCacheSize: process.env.DISCOVERY_MAX_CACHE_SIZE || 500
 };
 
