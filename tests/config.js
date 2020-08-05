@@ -1,3 +1,4 @@
+const { parseInt } = require('../lib/utils/formatters');
 const config = module.exports = {};
 config.clusterName = process.env.CLUSTER_NAME || 'local';
 config.defaultStorage = process.env.DEFAULT_STORAGE || 'fs';
@@ -22,7 +23,7 @@ config.discovery = {
     port: process.env.DISCOVERY_PORT || 9020,
     encoding: process.env.DISCOVERY_ENCODING || 'bson',
     timeout: process.env.DISCOVERY_TIMEOUT || 1000,
-    concurrency: process.env.DISCOVERY_CONCURRENCY || 50,
+    concurrency: parseInt(process.env.DISCOVERY_CONCURRENCY, 50),
     maxCacheSize: process.env.DISCOVERY_MAX_CACHE_SIZE || 500
 };
 
