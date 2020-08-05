@@ -1,7 +1,7 @@
 sudo: required
 language: node_js
 node_js:
-  - "10"
+  - "14"
 services:
   - docker
 branches:
@@ -26,7 +26,7 @@ after_success:
       npm version patch -m "$(git log -1 --pretty=%B) .... bump version [skip ci]"
       git push origin version-branch:master --follow-tags
     else
-      echo "version skiped!"
+      echo "version skipped!"
     fi
 deploy:
   skip_cleanup: true

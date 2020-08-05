@@ -100,7 +100,7 @@ describe('Tests', () => {
         it('should set data to storage', async () => {
             const jobId = 'jobId:' + uuid();
             const taskId = 'taskId:' + uuid();
-            const result = await dataAdapter.setData({ jobId, taskId, data: globalInput[0] });
+            const result = await dataAdapter.setData({ jobId, taskId, data: globalInput[0].toString() });
             expect(result).to.have.property('path');
         });
         it.skip('should create storage path', async () => {
