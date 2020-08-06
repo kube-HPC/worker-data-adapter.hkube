@@ -39,6 +39,7 @@ describe('Getting data from by path', () => {
         if (ds != null) {
             ds.close();
         }
+        config.port=config.port+1;
     })
     it('Getting data by path as json', async () => {
         ds = new DataServer(config);
