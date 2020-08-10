@@ -21,6 +21,18 @@ describe('Tests', () => {
         await dataAdapter.init(config);
         await dataServer.listen();
     });
+    describe('test limits',  () => {
+        it('number of sockets',async () => {
+            const count=2000
+            const requests=[];
+            for (let i=0;i<count;i++){
+                requests.push(dataAdapter._getFromPeer({
+                    discovery:{host: '127.0.0.1', port: 19200+i, tasks: ['t1'], taskId: 't2'}
+                }))
+            }
+            await Promise.all(requests)
+        }).timeout(30000);
+    });
     describe('Storage', () => {
         it('should get data from storage and parse input data', async () => {
             const jobId = 'jobId:' + uuid();
