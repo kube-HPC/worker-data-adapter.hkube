@@ -22,22 +22,14 @@ let data1 = {
     value1: 'value_1'
 };
 const data2 = Buffer.alloc(100);
-const encoding = config.encoding;
 
 const sleep = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 describe('Getting data from by path', () => {
-    let ds;
-    afterEach('close sockets', () => {
-        if (ds != null) {
-            ds.close();
-        }
-        ds = null;
-    })
     it('Getting data by task as json', async () => {
-        ds = new DataServer(config);
+        const ds = new DataServer({ ...config, port: config.port += 1 });
         await ds.listen();
         const { header, payload } = encodingLib.encodeHeaderPayload(data1);
         ds.setSendingState(task1, payload, payload.length, header);
@@ -48,7 +40,7 @@ describe('Getting data from by path', () => {
         expect(reply.content).to.eql(data1);
     });
     it('Getting data by task as binary', async () => {
-        ds = new DataServer({ port: config.port, encoding });
+        const ds = new DataServer({ ...config, port: config.port += 1 });
         await ds.listen();
         const { header, payload } = encodingLib.encodeHeaderPayload(data2);
         ds.setSendingState(task1, payload, payload.length, header);
@@ -59,7 +51,7 @@ describe('Getting data from by path', () => {
         expect(reply.content).to.eql(data2);
     });
     it('Getting data by multiple tasks', async () => {
-        ds = new DataServer(config);
+        const ds = new DataServer({ ...config, port: config.port += 1 });
         await ds.listen();
         const { header, payload } = encodingLib.encodeHeaderPayload(data1);
         ds.setSendingState(task1, payload, payload.length, header);
@@ -74,7 +66,7 @@ describe('Getting data from by path', () => {
         expect(reply2.content).to.eql(data1);
     });
     it('Failing data by multiple tasks', async () => {
-        ds = new DataServer(config);
+        const ds = new DataServer({ ...config, port: config.port += 1 });
         await ds.listen();
         const dr = new DataRequest({ address: { port: config.port, host: config.host }, tasks: [task1, task2], ...config });
         const response = await dr.invoke();
@@ -84,7 +76,7 @@ describe('Getting data from by path', () => {
         expect(reply2.content.hkube_error.code).to.eql(consts.server.notAvailable);
     });
     it('Failing to get data by task notAvailable', async () => {
-        ds = new DataServer(config);
+        const ds = new DataServer({ ...config, port: config.port += 1 });
         await ds.listen();
         const dr = new DataRequest({ address: { port: config.port, host: config.host }, tasks: [task1], ...config });
         const response = await dr.invoke();
@@ -92,13 +84,13 @@ describe('Getting data from by path', () => {
         expect(reply.content.hkube_error.code).to.eql(consts.server.notAvailable);
     });
     it('Failing to get data by PingTimeout', async () => {
-        const dr = new DataRequest({ address: { port: config.port, host: config.host }, tasks: [task1], ...config });
+        const dr = new DataRequest({ address: { port: config.port + 50, host: config.host }, tasks: [task1], ...config });
         const response = await dr.invoke();
         const reply = response[0];
         expect(reply.content.hkube_error.code).to.eql(consts.requestType.ping.errorCode);
     });
     it('Failing to get data by RequestTimeout', async () => {
-        ds = new DataServer(config);
+        const ds = new DataServer({ ...config, port: config.port += 1 });
         await ds.listen();
         const wrapper = async (args) => {
             await sleep(5000);
@@ -111,7 +103,7 @@ describe('Getting data from by path', () => {
         expect(reply.content.hkube_error.code).to.eql(consts.requestType.request.errorCode);
     });
     it('Check isServing', async () => {
-        ds = new DataServer(config);
+        const ds = new DataServer({ ...config, port: config.port += 1 });
         await ds.listen();
         const serving1 = ds.isServing();
         const dr = new DataRequest({ address: { port: config.port, host: config.host }, tasks: [task1], ...config });
