@@ -1,4 +1,3 @@
-const { parseInt } = require('../lib/utils/formatters');
 const config = module.exports = {};
 config.clusterName = process.env.CLUSTER_NAME || 'local';
 config.defaultStorage = process.env.DEFAULT_STORAGE || 'fs';
@@ -23,8 +22,9 @@ config.discovery = {
     port: process.env.DISCOVERY_PORT || 9020,
     encoding: process.env.DISCOVERY_ENCODING || 'bson',
     timeout: process.env.DISCOVERY_TIMEOUT || 1000,
-    concurrency: parseInt(process.env.DISCOVERY_CONCURRENCY, 50),
-    maxCacheSize: process.env.DISCOVERY_MAX_CACHE_SIZE || 500
+    networkTimeout: process.env.DISCOVERY_NETWORK_TIMEOUT || 1000,
+    maxCacheSize: process.env.DISCOVERY_MAX_CACHE_SIZE || 500,
+    servingReportInterval: process.env.DISCOVERY_SERVING_REPORT_INTERVAL || 5000,
 };
 
 config.s3 = {
@@ -41,11 +41,13 @@ config.storageAdapters = {
     s3: {
         connection: config.s3,
         encoding: process.env.STORAGE_ENCODING || 'bson',
+        maxCacheSize: process.env.STORAGE_MAX_CACHE_SIZE_MB || 500,
         moduleName: process.env.STORAGE_MODULE || '@hkube/s3-adapter'
     },
     fs: {
         connection: config.fs,
         encoding: process.env.STORAGE_ENCODING || 'bson',
+        maxCacheSize: process.env.STORAGE_MAX_CACHE_SIZE_MB || 500,
         moduleName: process.env.STORAGE_MODULE || '@hkube/fs-adapter'
     }
 };

@@ -2,18 +2,17 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'))
 const uuid = require('uuid/v4');
 const clone = require('clone');
+const { Encoding } = require('@hkube/encoding');
 const storageManager = require('@hkube/storage-manager');
 const expect = chai.expect
 const { dataAdapter, DataServer } = require('../index.js');
-const Cache = require('../lib/communication/data-server-cache');
 const config = require('./config');
-const globalInput = [[3, 6, 9, 1, 5, 4, 8, 7, 2], 'asc'];
-
 const discovery = { ...config.discovery, port: 9021 };
-
+const storage = config.storageAdapters[config.defaultStorage];
 const dataServer = new DataServer(discovery);
-const encodedData = { data: { array: globalInput[0] }, myValue: globalInput[1] }
-
+const encodingLib = new Encoding({ type: storage.encoding });
+const globalInput = [[3, 6, 9, 1, 5, 4, 8, 7, 2], 'asc'];
+const serverData = { data: { array: globalInput[0] }, myValue: globalInput[1] }
 const mainInput = [{ data: '$$guid-5' }, { prop: '$$guid-6' }, 'test-param', true, 12345];
 
 describe('Tests', () => {
@@ -21,17 +20,49 @@ describe('Tests', () => {
         await dataAdapter.init(config);
         await dataServer.listen();
     });
-    describe('test limits',  () => {
-        it('number of sockets',async () => {
-            const count=2000
-            const requests=[];
-            for (let i=0;i<count;i++){
+    describe('test limits', () => {
+        it.skip('number of sockets', async () => {
+            const count = 2000
+            const requests = [];
+            for (let i = 0; i < count; i++) {
                 requests.push(dataAdapter._getFromPeer({
-                    discovery:{host: '127.0.0.1', port: 19200+i, tasks: ['t1'], taskId: 't2'}
+                    discovery: { host: '127.0.0.1', port: 19200 + i }, tasks: ['t1'], taskId: 't2'
                 }))
             }
             await Promise.all(requests)
-        }).timeout(30000);
+        });
+    });
+    describe('flatInput', () => {
+        it('should get data without input', async () => {
+            const input = clone(mainInput);
+            const storage = {};
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            expect(flatInput).to.eql({});
+        });
+        it('should get data without storage', async () => {
+            const input = null;
+            const storage = {
+                'guid-5': { path: 'data.array' },
+                'guid-6': { path: 'myValue' }
+            };
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            expect(flatInput).to.eql({});
+        });
+        it('should get data with input and storage', async () => {
+            const input = clone(mainInput);
+            const storage = {
+                'guid-5': { path: 'data.array' },
+                'guid-6': { path: 'myValue' }
+            };
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            expect(flatInput).to.eql({ '0.data': '$$guid-5', '1.prop': '$$guid-6', '2': 'test-param', '3': true, '4': 12345 });
+        });
+        it('should get data without flat input', async () => {
+            const input = clone(mainInput);
+            const storage = {};
+            const result = await dataAdapter.getData({ input, storage });
+            expect(result).to.eql(input);
+        });
     });
     describe('Storage', () => {
         it('should get data from storage and parse input data', async () => {
@@ -48,7 +79,7 @@ describe('Tests', () => {
             expect(result[0].data).to.eql(globalInput[0]);
             expect(result[1].prop).to.eql(globalInput[1]);
         });
-        it.skip('should get multiple data from storage and parse input data', async () => {
+        it('should get multiple data from storage and parse input data', async () => {
             const jobId = 'jobId:' + uuid();
             const link = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { data: { array: globalInput[0] } } });
             const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { myValue: globalInput[1] } });
@@ -62,6 +93,7 @@ describe('Tests', () => {
             };
             const flatInput = dataAdapter.flatInput({ input, storage });
             const result = await dataAdapter.getData({ input, flatInput, storage });
+            result[0].data.sort();
             expect(result[0].data[0]).to.eql(globalInput[0]);
             expect(result[0].data[1]).to.eql(globalInput[0][2]);
             expect(result[0].data[2]).to.eql(globalInput[1]);
@@ -115,7 +147,7 @@ describe('Tests', () => {
             const result = await dataAdapter.setData({ jobId, taskId, data: globalInput[0].toString() });
             expect(result).to.have.property('path');
         });
-        it.skip('should create storage path', async () => {
+        it('should create storage path', async () => {
             const jobId = 'jobId:' + uuid();
             const taskId = 'taskId:' + uuid();
             const result = dataAdapter.createStoragePath({ jobId, taskId });
@@ -136,9 +168,26 @@ describe('Tests', () => {
         });
     });
     describe('Server', () => {
+        it('should get data from local server', async () => {
+            const taskId = 'taskId:' + uuid();
+            const { header, payload } = encodingLib.encodeHeaderPayload(serverData);
+            dataServer.setSendingState(taskId, payload, payload.length, header);
+            const input = clone(clone(mainInput));
+            const storage = {
+                'guid-5': { discovery, taskId, path: 'data.array' },
+                'guid-6': { discovery, taskId, path: 'myValue' }
+            };
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            dataAdapter._dataServer = dataServer;
+            const result = await dataAdapter.getData({ input, flatInput, storage });
+            dataAdapter._dataServer = null;
+            expect(result[0].data).to.eql(globalInput[0]);
+            expect(result[1].prop).to.eql(globalInput[1]);
+        });
         it('should get data from server and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            dataServer.setSendingState(taskId, encodedData);
+            const { header, payload } = encodingLib.encodeHeaderPayload(serverData);
+            dataServer.setSendingState(taskId, payload, payload.length, header);
             const input = clone(clone(mainInput));
             const storage = {
                 'guid-5': { discovery, taskId, path: 'data.array' },
@@ -149,9 +198,11 @@ describe('Tests', () => {
             expect(result[0].data).to.eql(globalInput[0]);
             expect(result[1].prop).to.eql(globalInput[1]);
         });
-        it.skip('should get multiple data from server and parse input data', async () => {
+        it('should get multiple data from server and parse input data', async () => {
+            const jobId = 'jobId:' + uuid();
             const taskId = 'taskId:' + uuid();
-            dataServer.setSendingState(taskId, encodedData);
+            const { header, payload } = encodingLib.encodeHeaderPayload(serverData);
+            dataServer.setSendingState(taskId, payload, payload.length, header);
             const input = [{ data: '$$guid-5' }, 'test-param', true, 12345];
             const storage = {
                 'guid-5': [
@@ -161,14 +212,33 @@ describe('Tests', () => {
                 ]
             };
             const flatInput = dataAdapter.flatInput({ input, storage });
-            const result = await dataAdapter.getData({ input, flatInput, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage, jobId });
+            result[0].data.sort();
             expect(result[0].data[0]).to.eql(globalInput[0]);
             expect(result[0].data[1]).to.eql(globalInput[0][2]);
             expect(result[0].data[2]).to.eql(globalInput[1]);
         });
+        it('should get multiple data without a server and parse input data', async () => {
+            const jobId = 'jobId:' + uuid();
+            const taskId = 'taskId:' + uuid();
+            await storageManager.hkube.put({ jobId, taskId, data: serverData });
+            const { header, payload } = encodingLib.encodeHeaderPayload(serverData);
+            dataServer.setSendingState(taskId, payload, payload.length, header);
+            const input = [{ data: '$$guid-5' }, 'test-param', true, 12345];
+            const discovery2 = { ...discovery, port: 5090 };
+            const storage = {
+                'guid-5': [
+                    { discovery: discovery2, tasks: [taskId], path: 'myValue' }
+                ]
+            };
+            const flatInput = dataAdapter.flatInput({ input, storage });
+            const result = await dataAdapter.getData({ input, flatInput, storage, jobId });
+            expect(result[0].data[0]).to.eql(globalInput[1]);
+        });
         it('should get data from storage by index and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            dataServer.setSendingState(taskId, globalInput[0]);
+            const { header, payload } = encodingLib.encodeHeaderPayload(globalInput[0]);
+            dataServer.setSendingState(taskId, payload, payload.length, header);
             const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, taskId, path: '2' },
@@ -181,7 +251,8 @@ describe('Tests', () => {
         });
         it('should get data from server by path and index and parse input data', async () => {
             const taskId = 'taskId:' + uuid();
-            dataServer.setSendingState(taskId, encodedData);
+            const { header, payload } = encodingLib.encodeHeaderPayload(serverData);
+            dataServer.setSendingState(taskId, payload, payload.length, header);
             const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, taskId, path: 'data.array.4' },
@@ -194,7 +265,8 @@ describe('Tests', () => {
         });
         it('should fail to get data from server by path', async () => {
             const taskId = 'taskId:' + uuid();
-            dataServer.setSendingState(taskId, encodedData);
+            const { header, payload } = encodingLib.encodeHeaderPayload(serverData);
+            dataServer.setSendingState(taskId, payload, payload.length, header);
             const input = clone(mainInput);
             const storage = {
                 'guid-5': { discovery, taskId, path: 'no_such' },
@@ -209,15 +281,15 @@ describe('Tests', () => {
     describe('Storage and Server', () => {
         it('should fail to get data from server and get from storage instead', async () => {
             const jobId = 'jobId:' + uuid();
-            const link = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { data: { array: globalInput[0] } } });
-            const link2 = await storageManager.hkube.put({ jobId, taskId: 'taskId:' + uuid(), data: { myValue: globalInput[1] } });
-
+            const taskId1 = 'taskId:' + uuid();
+            const taskId2 = 'taskId:' + uuid();
+            const link = await storageManager.hkube.put({ jobId, taskId: taskId1, data: { data: { array: globalInput[0] } } });
+            const link2 = await storageManager.hkube.put({ jobId, taskId: taskId2, data: { myValue: globalInput[1] } });
             const discovery2 = { ...discovery, port: 5090 };
-
             const input = clone(mainInput);
             const storage = {
-                'guid-5': { discovery: discovery2, storageInfo: link, path: 'data.array' },
-                'guid-6': { discovery: discovery2, storageInfo: link2, path: 'myValue' }
+                'guid-5': { discovery: discovery2, taskId: taskId1, storageInfo: link, path: 'data.array' },
+                'guid-6': { discovery: discovery2, taskId: taskId2, storageInfo: link2, path: 'myValue' }
             };
             const flatInput = dataAdapter.flatInput({ input, storage });
             const result = await dataAdapter.getData({ input, flatInput, storage });
@@ -234,23 +306,23 @@ describe('Tests', () => {
             const jobId = 'jobId:' + uuid();
             const taskId1 = 'taskId:' + uuid();
             const taskId2 = 'taskId:' + uuid();
-            const taskId3 = 'taskId:' + uuid();
             const data1 = { data: { array: globalInput[0] } };
             const data2 = { myValue: globalInput[1] };
-            dataServer.setSendingState(taskId1, data1);
-            dataServer.setSendingState(taskId2, data2);
+            const { header: header1, payload: payload1 } = encodingLib.encodeHeaderPayload(data1);
+            const { header: header2, payload: payload2 } = encodingLib.encodeHeaderPayload(data2);
+            dataServer.setSendingState(taskId1, payload1, payload1.length, header1);
+            dataServer.setSendingState(taskId2, payload2, payload2.length, header2);
             await storageManager.hkube.put({ jobId, taskId: taskId1, data: data1 });
             await storageManager.hkube.put({ jobId, taskId: taskId2, data: data2 });
-            await storageManager.hkube.put({ jobId, taskId: taskId3, data: data2 });
             const input = clone(mainInput);
             const storage = {
                 'guid-5': [{ discovery, tasks: [taskId1, taskId1], path: 'data.array' }],
-                'guid-6': [{ discovery, tasks: [taskId1, taskId2, taskId3], path: 'myValue' }]
+                'guid-6': [{ discovery, tasks: [taskId1, taskId2], path: 'myValue' }]
             };
             const flatInput = dataAdapter.flatInput({ input, storage });
             const result = await dataAdapter.getData({ jobId, input, flatInput, storage });
             expect(result[0].data).to.eql([globalInput[0], globalInput[0]]);
-            expect(result[1].prop).to.eql([undefined, globalInput[1], globalInput[1]]);
+            expect(result[1].prop).to.eql([undefined, globalInput[1]]);
         });
     });
     describe('createStorageInfo', () => {
@@ -258,31 +330,12 @@ describe('Tests', () => {
             const jobId = 'jobId:' + uuid();
             const taskId = 'taskId:' + uuid();
             const nodeName = 'green';
-            const data = encodedData;
-
-            const info = dataAdapter.createStorageInfo({ jobId, taskId, nodeName, data, savePaths: ['green'] });
+            const encodedData = dataAdapter.encode(serverData);
+            const info = dataAdapter.createStorageInfo({ jobId, taskId, nodeName, data: serverData, encodedData, savePaths: ['green'] });
             expect(info).to.have.property('storageInfo');
             expect(info).to.have.property('metadata');
             expect(info.storageInfo).to.have.property('path');
             expect(info.storageInfo).to.have.property('size');
-        });
-
-    });
-    describe('Cache', () => {
-        it('should update cache until max size', async () => {
-            const taskId1 = 'taskId:' + uuid();
-            const taskId2 = 'taskId:' + uuid();
-            const taskId3 = 'taskId:' + uuid();
-            const taskId4 = 'taskId:' + uuid();
-            const data = encodedData;
-            const maxCacheSize = 3;
-            const cache = new Cache({ maxCacheSize });
-            cache.update(taskId1, data);
-            cache.update(taskId2, data);
-            cache.update(taskId3, data);
-            cache.update(taskId4, data);
-
-            expect(cache.size()).to.equal(maxCacheSize);
         });
 
     });
