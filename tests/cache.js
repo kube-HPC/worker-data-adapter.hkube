@@ -10,9 +10,19 @@ const encodedData = { data: { array: globalInput[0] }, myValue: globalInput[1] }
 const storage = config.storageAdapters[config.defaultStorage];
 const encoding = new Encoding({ type: storage.encoding });
 const { header, payload } = encoding.encodeHeaderPayload(encodedData);
-const MB = 1000 * 1000;
+const MB = 1024 * 1024;
 
 describe('Cache', () => {
+    it('should not update due to max size', async () => {
+        const taskId1 = 'taskId:' + uuid();
+        const maxCacheSize = 300;
+        const itemSize = 301;
+        const size = itemSize * MB;
+        const cache = new Cache({ maxCacheSize });
+        const res = cache.update(taskId1, payload, size, header);
+        expect(res).to.equal(false);
+        expect(cache.size).to.equal(0);
+    });
     it('should update cache until max size', async () => {
         const taskId1 = 'taskId:' + uuid();
         const taskId2 = 'taskId:' + uuid();
@@ -31,7 +41,6 @@ describe('Cache', () => {
         cache.update(taskId4, payload, size, header);
         cache.update(taskId5, payload, size, header);
         cache.update(taskId6, payload, size, header);
-
         expect(cache.count).to.equal(maxCount);
         expect(cache.size).to.equal(maxCount * size);
     });
