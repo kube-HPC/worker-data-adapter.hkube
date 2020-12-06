@@ -1,6 +1,6 @@
 {
   "name": "@hkube/worker-data-adapter",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "hkube data adapter for get/set data via storage/networking",
   "main": "index.js",
   "scripts": {
