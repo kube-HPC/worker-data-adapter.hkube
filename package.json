@@ -21,8 +21,10 @@
   "dependencies": {
     "@hkube/encoding": "^1.0.20",
     "@hkube/storage-manager": "^2.0.26",
+    "@hkube/uid": "^1.0.4",
     "async": "^3.2.0",
     "flat": "^5.0.0",
+    "lodash.clonedeep": "^4.5.0",
     "object-path": "^0.11.4",
     "performance-now": "^2.1.0",
     "zeromq": "^5.2.0"
