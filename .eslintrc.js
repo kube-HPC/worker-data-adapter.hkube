@@ -32,6 +32,7 @@ module.exports = {
         "arrow-body-style": "off",
         "arrow-parens": "off",
         "class-methods-use-this": "off",
-        "no-unused-expressions": 0
+        "no-unused-expressions": 0,
+        "no-await-in-loop": "off"
     }
 };
