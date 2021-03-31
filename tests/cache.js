@@ -2,9 +2,11 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'))
 const uuid = require('uuid/v4');
 const { Encoding } = require('@hkube/encoding');
+const Logger = require('@hkube/logger');
+const config = require('./config');
+const log = new Logger(config.serviceName, config.logger);
 const expect = chai.expect
 const Cache = require('../lib/cache/cache');
-const config = require('./config');
 const globalInput = [[3, 6, 9, 1, 5, 4, 8, 7, 2], 'asc'];
 const encodedData = { data: { array: globalInput[0] }, myValue: globalInput[1] };
 const storage = config.storageAdapters[config.defaultStorage];

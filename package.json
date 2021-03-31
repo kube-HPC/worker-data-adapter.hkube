@@ -20,6 +20,7 @@
   "license": "ISC",
   "dependencies": {
     "@hkube/encoding": "^1.0.20",
+    "@hkube/logger": "^1.0.27",
     "@hkube/storage-manager": "^2.0.26",
     "@hkube/uid": "^1.0.4",
     "async": "^3.2.0",

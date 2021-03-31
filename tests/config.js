@@ -4,6 +4,14 @@ config.defaultStorage = process.env.DEFAULT_STORAGE || 'fs';
 config.storageMode = 'v2';
 config.enableCache = !!process.env.ENABLE_WORKER_CACHE;
 
+config.logger = {
+    transport: {
+        console: true,
+    },
+    format: 'wrapper::{level}::{message}',
+    verbosityLevel: process.env.HKUBE_LOG_LEVEL || 2
+};
+
 config.socket = {
     port: process.env.WORKER_SOCKET_PORT || 3000,
     host: process.env.WORKER_SOCKET_HOST || 'localhost',

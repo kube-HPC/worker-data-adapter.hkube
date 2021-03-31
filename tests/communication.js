@@ -1,10 +1,13 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
 const { Encoding } = require('@hkube/encoding');
+const Logger = require('@hkube/logger');
+const conf = require('./config');
+const log = new Logger(conf.serviceName, conf.logger);
 const { DataRequest } = require('../lib/communication/data-client');
 const DataServer = require('../lib/communication/data-server');
 const consts = require('../lib/consts/messages');
-const config = require('./config').discovery;
+const config = conf.discovery;
 const { defaultStorage, storageAdapters } = require('./config');
 const storage = storageAdapters[defaultStorage];
 const encodingLib = new Encoding({ type: storage.encoding });
