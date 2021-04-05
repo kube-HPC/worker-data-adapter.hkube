@@ -3,9 +3,7 @@ chai.use(require('chai-as-promised'))
 const uuid = require('uuid/v4');
 const clone = require('clone');
 const { Encoding } = require('@hkube/encoding');
-const Logger = require('@hkube/logger');
 const config = require('./config');
-const log = new Logger(config.serviceName, config.logger);
 const storageManager = require('@hkube/storage-manager');
 const expect = chai.expect
 const { dataAdapter, DataServer } = require('../index.js');
