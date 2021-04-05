@@ -1,9 +1,8 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
 const { Encoding } = require('@hkube/encoding');
-const Logger = require('@hkube/logger');
+require('../index.js');
 const conf = require('./config');
-const log = new Logger(conf.serviceName, conf.logger);
 const { DataRequest } = require('../lib/communication/data-client');
 const DataServer = require('../lib/communication/data-server');
 const consts = require('../lib/consts/messages');
