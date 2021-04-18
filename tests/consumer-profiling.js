@@ -1,4 +1,5 @@
 const { Encoding } = require('@hkube/encoding');
+const now = require('performance-now')
 const Logger = require('@hkube/logger');
 const { sleep } = require('../lib/utils/waitFor');
 const config = {
@@ -20,6 +21,7 @@ const encoding = new Encoding({ type: 'msgpack' });
 const port = 4002;
 const consumerTypes = ['B', 'C'];
 const remoteAddress = `tcp://localhost:${port}`;
+
 
 const startMessageListening = async () => {
     let i = 0;
@@ -48,5 +50,10 @@ const startMessageListening = async () => {
         }
     }
 }
+
+const start = now();
+const end = now();
+const duration = parseFloat((end - start).toFixed(4));
+
 
 startMessageListening();
