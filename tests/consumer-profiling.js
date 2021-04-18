@@ -21,6 +21,7 @@ const port = 4002;
 const consumerTypes = ['B', 'C'];
 const remoteAddress = `tcp://localhost:${port}`;
 
+
 const startMessageListening = async () => {
     let i = 0;
     const listeners = [];
@@ -48,5 +49,6 @@ const startMessageListening = async () => {
         }
     }
 }
+
 
 startMessageListening();
