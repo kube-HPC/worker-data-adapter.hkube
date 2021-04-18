@@ -1,5 +1,4 @@
 const { Encoding } = require('@hkube/encoding');
-const now = require('performance-now')
 const Logger = require('@hkube/logger');
 const { sleep } = require('../lib/utils/waitFor');
 const config = {
@@ -50,10 +49,6 @@ const startMessageListening = async () => {
         }
     }
 }
-
-const start = now();
-const end = now();
-const duration = parseFloat((end - start).toFixed(4));
 
 
 startMessageListening();
