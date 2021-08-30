@@ -3,15 +3,19 @@ const log = Logger.GetLogFromContainer();
 if (!log) {
     // init a new logger if not exist
     const config = {
-        isDefault: true,
-        enableColors: false,
-        format: 'wrapper::{level}::{message}',
-        verbosityLevel: process.env.HKUBE_LOG_LEVEL || 2,
-        throttle: {
-            wait: 30000
-        },
         transport: {
             console: true,
+        },
+        console: {
+            json: false,
+            colors: false,
+            format: 'wrapper::{level}::{message}',
+            level: process.env.HKUBE_LOG_LEVEL,
+        },
+        options: {
+            throttle: {
+                wait: 30000
+            },
         },
     };
     new Logger('worker-data-adapter', config); // eslint-disable-line
