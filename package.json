@@ -1,6 +1,6 @@
 {
   "name": "@hkube/worker-data-adapter",
-  "version": "1.0.35",
+  "version": "1.1.0",
   "description": "hkube data adapter for get/set data via storage/networking",
   "main": "index.js",
   "scripts": {
@@ -19,9 +19,9 @@
   "author": "Hkube",
   "license": "ISC",
   "dependencies": {
-    "@hkube/encoding": "^1.0.20",
+    "@hkube/encoding": "^2.0.1",
     "@hkube/logger": "^2.0.1",
-    "@hkube/storage-manager": "^2.0.26",
+    "@hkube/storage-manager": "^2.1.1",
     "@hkube/uid": "^1.0.4",
     "async": "^3.2.0",
     "flat": "^5.0.0",
